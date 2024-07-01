@@ -32,8 +32,8 @@ jobs:
 
       - name: Configure Git
         run: |
-          git config --global user.email "your-project@example.com"
-          git config --global user.name "Your Project Bot"
+          git config --global user.email "webminproxy@border0.com"
+          git config --global user.name "Border0 Webmin proxy Bot"
 
       - name: Create Git Tag
         env:
@@ -43,7 +43,7 @@ jobs:
             echo "Tag ${{ env.NEW_VERSION }} already exists"
           else
             git tag ${{ env.NEW_VERSION }}
-            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/atoonk/webmin-login-prox.git ${{ env.NEW_VERSION }}
+            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/borderzero/webmin-login-proxy.git ${{ env.NEW_VERSION }}
           fi
 
       - name: Run GoReleaser
