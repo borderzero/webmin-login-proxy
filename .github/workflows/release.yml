@@ -1,0 +1,56 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.21
+
+      - name: Auto Increment Version
+        id: version
+        run: |
+          # Fetch all tags to ensure they are available for comparison
+          git fetch --tags
+          # Get the current version from the latest Git tag
+          CURRENT_VERSION=$(git describe --tags $(git rev-list --tags --max-count=1) || echo "v0.0.0")
+          # Increment the version (assuming semantic versioning)
+          IFS='.' read -r -a VERSION_PARTS <<< "${CURRENT_VERSION#v}"
+          PATCH_VERSION=$((VERSION_PARTS[2] + 1))
+          NEW_VERSION="v${VERSION_PARTS[0]}.${VERSION_PARTS[1]}.$PATCH_VERSION"
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+
+      - name: Configure Git
+        run: |
+          git config --global user.email "your-project@example.com"
+          git config --global user.name "Your Project Bot"
+
+      - name: Create Git Tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if git rev-parse ${{ env.NEW_VERSION }} >/dev/null 2>&1; then
+            echo "Tag ${{ env.NEW_VERSION }} already exists"
+          else
+            git tag ${{ env.NEW_VERSION }}
+            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/atoonk/webmin-login-prox.git ${{ env.NEW_VERSION }}
+          fi
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v2
+        with:
+          version: latest
+          args: release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
