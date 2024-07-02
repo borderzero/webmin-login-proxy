@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"encoding/pem"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -42,8 +43,14 @@ var (
 )
 
 func main() {
+	// Define the config flag with the -c option
+	configFile := flag.String("c", "config.json", "Path to the configuration file")
+	flag.Parse()
+
 	// Load configuration
-	loadConfig("config.json")
+	if err := loadConfig(*configFile); err != nil {
+		log.Fatalf("Error loading config file: %v", err)
+	}
 
 	// Validate configuration
 	validateConfig()
@@ -197,18 +204,18 @@ func main() {
 }
 
 // loadConfig loads the configuration from a JSON file.
-func loadConfig(filename string) {
+func loadConfig(filename string) error {
 	file, err := os.Open(filename)
 	if err != nil {
-		log.Printf("Failed to open config file: %v", err)
-		return
+		return fmt.Errorf("failed to open config file: %v", err)
 	}
 	defer file.Close()
 
 	decoder := json.NewDecoder(file)
 	if err := decoder.Decode(&config); err != nil {
-		log.Printf("Failed to decode config file: %v", err)
+		return fmt.Errorf("failed to decode config file: %v", err)
 	}
+	return nil
 }
 
 // validateConfig checks for required configuration values and logs warnings or exits if not found.
