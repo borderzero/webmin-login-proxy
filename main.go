@@ -45,6 +45,8 @@ var (
 func main() {
 	// Define the config flag with the -c option
 	configFile := flag.String("c", "config.json", "Path to the configuration file")
+	tlsCertFile := flag.String("t", "cert.pem", "Path to the TLS certificate file")
+	tlsKeyFile := flag.String("k", "key.pem", "Path to the TLS key file")
 	flag.Parse()
 
 	// Load configuration
@@ -195,10 +197,10 @@ func main() {
 	})
 
 	// Check and generate TLS files if not present
-	checkAndGenerateTLSFiles("cert.pem", "key.pem")
+	checkAndGenerateTLSFiles(*tlsCertFile, *tlsKeyFile)
 
 	log.Printf("Starting proxy server on %s", config.ListenAddr)
-	if err := http.ListenAndServeTLS(config.ListenAddr, "cert.pem", "key.pem", nil); err != nil {
+	if err := http.ListenAndServeTLS(config.ListenAddr, *tlsCertFile, *tlsKeyFile, nil); err != nil {
 		log.Fatalf("Failed to start HTTPS server: %v", err)
 	}
 }
@@ -455,17 +457,17 @@ func generateTLSFiles(certFile, keyFile string) {
 
 	certOut, err := os.Create(certFile)
 	if err != nil {
-		log.Fatalf("Failed to open cert.pem for writing: %v", err)
+		log.Fatalf("Failed to open %s for writing: %v", certFile, err)
 	}
 	pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: certDER})
 	certOut.Close()
-	log.Println("Written cert.pem")
+	log.Printf("Written %s", certFile)
 
 	keyOut, err := os.Create(keyFile)
 	if err != nil {
-		log.Fatalf("Failed to open key.pem for writing: %v", err)
+		log.Fatalf("Failed to open %s for writing: %v", keyFile, err)
 	}
 	pem.Encode(keyOut, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(priv)})
 	keyOut.Close()
-	log.Println("Written key.pem")
+	log.Printf("Written %s", keyFile)
 }
